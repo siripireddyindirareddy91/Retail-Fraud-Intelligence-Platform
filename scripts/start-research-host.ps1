@@ -33,7 +33,7 @@ foreach ($name in @('RF_DATABASE_URL','RF_JWT_SECRET')) {
 $configuration = $null
 $env:RF_ENVIRONMENT = 'production'
 $env:RF_COOKIE_SECURE = 'true'
-$env:RF_ALLOWED_ORIGINS = '["https://frontend-jnda.vercel.app"]'
+$env:RF_ALLOWED_ORIGINS = '["https://frontend-jnda.vercel.app","https://retail-fraud-intelligence-platform.vercel.app"]'
 $env:RF_VOLUME_ROOT = $hostRoot
 $env:RF_BIND_HOST = '127.0.0.1'
 $env:PORT = '8010'

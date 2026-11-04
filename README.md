@@ -6,7 +6,7 @@ Vercel backend packaging is verified at 18.5 MB for commit `5df5160`. Production
 
 ## Open the website
 
-Public website: https://frontend-jnda.vercel.app/dashboard. Real research execution uses the [personal PC host](docs/PC_RESEARCH_HOST.md); the PC must remain awake and connected. No paid fallback is configured.
+Public website: https://retail-fraud-intelligence-platform.vercel.app/dashboard. Real research execution uses the [personal PC host](docs/PC_RESEARCH_HOST.md); the PC must remain awake and connected. No paid fallback is configured.
 
 After dependency installation (see INSTALLATION_GUIDE.md):
 
