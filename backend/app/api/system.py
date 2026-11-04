@@ -13,6 +13,11 @@ from ..models import Job, WorkerHeartbeat, now
 router = APIRouter(tags=["System"])
 
 
+def research_runtime_status():
+    import importlib.util
+    return "installed" if all(importlib.util.find_spec(name) is not None for name in ("sdv", "torch", "shap", "mlflow", "pyarrow")) else "external_worker_required"
+
+
 @router.get("/health/live")
 def live():
     return {"status": "ok", "service": "retail-fraud-api"}
@@ -47,7 +52,7 @@ def ready(request: Request):
 def capabilities(user: CurrentUser):
     import importlib.util
     available = lambda name: importlib.util.find_spec(name) is not None
-    return {"authentication": True, "persistence": True, "persistent_jobs": ["system.integrity_check", "dataset.generate", "generative.train", "scenario.execute", "model.train", "predictions.batch", "robustness.run", "analysis.*", "report.generate"], "job_events_sse": True, "generation": {"rule_based": available("numpy"), "statistical": available("scipy"), "ctgan": available("sdv") and available("torch"), "tvae": available("sdv") and available("torch")}, "model_training": available("sklearn"), "robustness": available("sklearn"), "shap": available("shap"), "transaction_stream": True, "research_engine_status": "installed"}
+    return {"authentication": True, "persistence": True, "persistent_jobs": ["system.integrity_check", "dataset.generate", "generative.train", "scenario.execute", "model.train", "predictions.batch", "robustness.run", "analysis.*", "report.generate"], "job_events_sse": True, "generation": {"rule_based": available("numpy"), "statistical": available("scipy"), "ctgan": available("sdv") and available("torch"), "tvae": available("sdv") and available("torch")}, "model_training": available("sklearn"), "robustness": available("sklearn"), "shap": available("shap"), "transaction_stream": True, "research_engine_status": research_runtime_status(), "availability_scope": "api_process", "research_execution": "separate_worker"}
 
 
 @router.get("/system/status")
@@ -66,4 +71,4 @@ def status(request: Request, user: CurrentUser, db: DB):
         storage_ok = True
     except OSError:
         pass
-    return {"database": {"status": "connected", "dialect": db.bind.dialect.name}, "worker": {"status": "available" if count else "unavailable", "active_workers": count}, "storage": {"status": "writable" if storage_ok else "unavailable"}, "queue": {"owned_queued_jobs": queue}, "mlflow": {"status": "configured", "tracking": "runs record actual tracking success or failure"}, "engines": {"status": "installed", "execution": "bounded CPU research jobs"}}
+    return {"database": {"status": "connected", "dialect": db.bind.dialect.name}, "worker": {"status": "available" if count else "unavailable", "active_workers": count}, "storage": {"status": "writable" if storage_ok else "unavailable"}, "queue": {"owned_queued_jobs": queue}, "mlflow": {"status": "configured", "tracking": "runs record actual tracking success or failure"}, "engines": {"status": research_runtime_status(), "execution": "separate worker; runtime availability above describes the API process"}}

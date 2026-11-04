@@ -2,14 +2,13 @@ import io
 import json
 import pickle
 
-import numpy as np
-import pandas as pd
 
 from ..models import Artifact, Dataset
 from ..services.artifacts import inspect_artifact, safe_path, write_bytes
 
 
 def clean(value):
+    import numpy as np
     if isinstance(value, dict):
         return {str(key): clean(item) for key, item in value.items()}
     if isinstance(value, (list, tuple, np.ndarray)):
@@ -28,15 +27,16 @@ def records(frame):
 
 
 def read_frame(db, settings, dataset):
+    import pandas as pd
     artifact = db.get(Artifact, dataset.artifact_id)
     if not inspect_artifact(settings.artifact_root, artifact)["valid"]:
         raise ValueError("Dataset integrity check failed")
-    return pd.read_parquet(safe_path(settings.artifact_root, artifact.storage_key))
+    return pd.read_parquet(safe_path(settings.artifact_root, artifact.storage_key), engine="fastparquet")
 
 
 def write_frame(db, settings, owner_id, frame, name, method, config):
     buffer = io.BytesIO()
-    frame.to_parquet(buffer, index=False)
+    frame.to_parquet(buffer, index=False, engine="pyarrow")
     artifact = write_bytes(db, settings.artifact_root, owner_id, f"{name[:80]}.parquet", buffer.getvalue(), "application/vnd.apache.parquet", ".parquet")
     dataset = Dataset(owner_id=owner_id, artifact_id=artifact.id, name=name, method=method, row_count=len(frame), fraud_count=int(frame.is_fraud.sum()), config=clean(config), status="completed")
     db.add(dataset)

@@ -2,6 +2,17 @@
 
 Requirements: Python 3.12, Node 22.12+ or 24, and npm. Allow several GB for the scientific Python dependencies and generated artifacts.
 
+The default backend `pyproject.toml` install is now the API/CPU-inference profile.
+The full snapshot below includes research engines. A full worker can alternatively
+install `pip install -e ".[research]"` from backend. Vercel should use the default
+profile with `uv.lock`, never the full worker snapshot or research extras.
+
+For an existing environment that has `xgboost`, stop its services after research
+jobs finish before changing packages. Use a fresh environment, or uninstall that
+distribution before installing `xgboost-cpu`; do not overlay both distributions.
+The CPU package retains the implemented CPU workflows. Keep all user databases
+and artifacts intact. See docs/VERCEL_BUNDLE_SIZE.md for profile details.
+
 From the project root:
 
 ```powershell

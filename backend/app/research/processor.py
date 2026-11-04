@@ -215,7 +215,12 @@ def process(sessions, settings, job_id, worker_id, progress):
             db.add(experiment)
             db.flush()
             result["experiment_id"] = experiment.id
-        result["versions"] = {name: importlib.metadata.version(name) for name in ["numpy", "pandas", "scikit-learn", "sdv", "shap", "torch", "xgboost", "mlflow"]}
+        result["versions"] = {name: importlib.metadata.version(name) for name in ["numpy", "pandas", "scikit-learn", "sdv", "shap", "torch", "mlflow"]}
+        try:
+            result["versions"]["xgboost"] = importlib.metadata.version("xgboost-cpu")
+        except importlib.metadata.PackageNotFoundError:
+            # Historical full research environments used the GPU-capable wheel.
+            result["versions"]["xgboost"] = importlib.metadata.version("xgboost")
         import platform
         result["versions"]["python"] = platform.python_version()
         if dataset:

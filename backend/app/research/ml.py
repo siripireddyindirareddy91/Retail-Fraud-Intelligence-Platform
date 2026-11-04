@@ -1,20 +1,11 @@
 import time
 
-import numpy as np
-import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, average_precision_score, brier_score_loss, confusion_matrix, f1_score, precision_recall_curve, precision_score, recall_score, roc_auc_score, roc_curve
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .data import CATEGORICAL, FEATURES, NUMERIC, frame_hash
 
 
 def split_data(frame, strategy="chronological", seed=42):
+    from sklearn.model_selection import GroupShuffleSplit
     frame = frame.sort_values(["transaction_timestamp", "transaction_id"]).reset_index(drop=True)
     if strategy == "customer_grouped":
         first = GroupShuffleSplit(n_splits=1, train_size=.7, random_state=seed)
@@ -32,6 +23,12 @@ def split_data(frame, strategy="chronological", seed=42):
 
 
 def build_pipeline(algorithm, seed=42, trial=0):
+    from sklearn.compose import ColumnTransformer
+    from sklearn.ensemble import IsolationForest, RandomForestClassifier
+    from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder, StandardScaler
     numerical = Pipeline([("impute", SimpleImputer(strategy="median", keep_empty_features=True)), ("scale", StandardScaler())])
     categorical = Pipeline([("impute", SimpleImputer(strategy="most_frequent")), ("encode", OneHotEncoder(handle_unknown="ignore", sparse_output=False))])
     preprocess = ColumnTransformer([("num", numerical, NUMERIC), ("cat", categorical, CATEGORICAL)])
@@ -50,6 +47,7 @@ def build_pipeline(algorithm, seed=42, trial=0):
 
 
 def scores(bundle, frame):
+    import numpy as np
     pipeline = bundle["pipeline"]
     if bundle["algorithm"] != "isolation_forest":
         return pipeline.predict_proba(frame[FEATURES])[:, 1]
@@ -59,12 +57,16 @@ def scores(bundle, frame):
 
 
 def choose_threshold(y, probabilities):
+    import numpy as np
+    from sklearn.metrics import accuracy_score, average_precision_score, brier_score_loss, confusion_matrix, f1_score, precision_recall_curve, precision_score, recall_score, roc_auc_score, roc_curve
     p, r, thresholds = precision_recall_curve(y, probabilities)
     f1 = 2 * p[:-1] * r[:-1] / np.maximum(p[:-1] + r[:-1], 1e-12)
     return float(thresholds[np.argmax(f1)])
 
 
 def metrics(y, probabilities, threshold=.5, probabilistic=True):
+    import numpy as np
+    from sklearn.metrics import accuracy_score, average_precision_score, brier_score_loss, confusion_matrix, f1_score, precision_recall_curve, precision_score, recall_score, roc_auc_score, roc_curve
     y = np.asarray(y, dtype=int)
     probabilities = np.asarray(probabilities, dtype=float)
     predicted = (probabilities >= threshold).astype(int)
@@ -90,6 +92,8 @@ def metrics(y, probabilities, threshold=.5, probabilistic=True):
 
 
 def train(frame, algorithm="random_forest", seed=42, split="chronological", trials=1, progress=lambda *_: None, parts=None):
+    import numpy as np
+    from sklearn.metrics import accuracy_score, average_precision_score, brier_score_loss, confusion_matrix, f1_score, precision_recall_curve, precision_score, recall_score, roc_auc_score, roc_curve
     train_set, validation, test = parts or split_data(frame, split, seed)
     if len(train_set) > 70000:
         raise ValueError("Training exceeds the configured 70,000-row local limit")
@@ -121,6 +125,7 @@ def train(frame, algorithm="random_forest", seed=42, split="chronological", tria
 
 
 def explain(bundle, frame, samples=40, seed=42, background_samples=20):
+    import numpy as np
     import shap
     pipeline = bundle["pipeline"]
     background_frame = bundle["train"][FEATURES].sample(min(background_samples, len(bundle["train"])), random_state=seed)

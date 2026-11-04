@@ -1,13 +1,12 @@
 import random
 
-import numpy as np
-import pandas as pd
-from joblib import parallel_config
 
 from .data import CATEGORICAL, FEATURES, sequence_features, validation
 
 
 def fit_synthesizer(frame, method="ctgan", epochs=10, seed=42):
+    import numpy as np
+    from joblib import parallel_config
     import time
     started = time.perf_counter()
     import torch
@@ -32,6 +31,8 @@ def fit_synthesizer(frame, method="ctgan", epochs=10, seed=42):
 
 
 def sample_synthesizer(bundle, template, conditions=None):
+    import pandas as pd
+    from joblib import parallel_config
     conditions = conditions or {}
     if any(key not in bundle["columns"] for key in conditions):
         raise ValueError("Conditions must use fitted synthesizer columns")

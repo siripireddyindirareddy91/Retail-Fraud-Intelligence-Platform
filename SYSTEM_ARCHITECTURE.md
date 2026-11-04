@@ -2,6 +2,13 @@
 
 Status: architecture approved by the user on 4 November 2026. The frontend, authenticated backend, generation, detection, robustness, explanation, monitoring and report workflows are implemented. Local verification uses SQLite and a separate bounded worker. PostgreSQL/Docker runtime verification remains pending. Deployment topology below describes the prepared container configuration rather than a verified hosted service.
 
+The Vercel API dependency profile now retains CPU inference and dataset reads
+while the optional `research` extra supplies the full worker engines. API startup
+loads no scientific libraries; research jobs retain their separate worker path.
+The API reads worker-written Parquet through Fastparquet and uses official
+CPU-only XGBoost. See docs/VERCEL_BUNDLE_SIZE.md for measured components and the
+unverified cloud size/storage boundaries. No durable remote store is implied.
+
 ## 1. Project understanding and scope
 
 Build a research application for fictional retail transactions: generate data, inject controlled fraud scenarios, train detectors, compare baseline and synthetic augmentation under controlled shifts, explain predictions, and export reproducible results. It is a research simulator, not a payment processor or a production fraud decision system. Ground-truth labels, predictions, and risk thresholds remain separate.

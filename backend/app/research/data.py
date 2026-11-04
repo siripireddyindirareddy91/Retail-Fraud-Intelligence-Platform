@@ -1,9 +1,6 @@
 import hashlib
 from datetime import timezone
 
-import numpy as np
-import pandas as pd
-from scipy.stats import ks_2samp, wasserstein_distance
 
 from .schemas import Generation, SCENARIOS
 
@@ -14,6 +11,8 @@ BUSINESS_COLUMNS = ["transaction_id", "customer_id", "product_id", "transaction_
 
 
 def sequence_features(frame):
+    import numpy as np
+    import pandas as pd
     frame = frame.sort_values(["transaction_timestamp", "transaction_id"]).reset_index(drop=True)
     timestamps = pd.to_datetime(frame.transaction_timestamp, utc=True, format="ISO8601")
     frame["hour"] = timestamps.dt.hour
@@ -30,6 +29,8 @@ def sequence_features(frame):
 
 
 def apply_scenario(frame, scenario, fraction=.05, severity=1, seed=42, label=True):
+    import numpy as np
+    import pandas as pd
     data = frame.copy().reset_index(drop=True)
     rng = np.random.default_rng(seed)
     selected = rng.choice(len(data), max(1, round(len(data) * fraction)), replace=False)
@@ -70,6 +71,8 @@ def apply_scenario(frame, scenario, fraction=.05, severity=1, seed=42, label=Tru
 
 
 def generate(config: Generation):
+    import numpy as np
+    import pandas as pd
     rng = np.random.default_rng(config.seed)
     n = config.rows
     start = pd.Timestamp(config.start_at)
@@ -109,6 +112,8 @@ def generate(config: Generation):
 
 
 def validation(frame):
+    import numpy as np
+    import pandas as pd
     checks = {"missing_values": int(frame.isna().sum().sum()), "nonfinite_numeric": int((~np.isfinite(frame[NUMERIC].to_numpy(float))).sum()), "duplicate_transaction_ids": int(frame.transaction_id.duplicated().sum()), "nonpositive_amount": int((frame.transaction_amount <= 0).sum()), "invalid_quantity": int((frame.quantity < 1).sum()), "invalid_labels": int((~frame.is_fraud.isin([0, 1])).sum()), "invalid_timestamps": int(pd.to_datetime(frame.transaction_timestamp, utc=True, format="ISO8601", errors="coerce").isna().sum())}
     q1, q3 = frame.transaction_amount.quantile([.25, .75])
     outliers = int(((frame.transaction_amount < q1 - 1.5 * (q3 - q1)) | (frame.transaction_amount > q3 + 1.5 * (q3 - q1))).sum())
@@ -116,6 +121,8 @@ def validation(frame):
 
 
 def quality(frame, reference):
+    import numpy as np
+    from scipy.stats import ks_2samp, wasserstein_distance
     numerical, categorical = [], []
     for feature in NUMERIC:
         a, b = frame[feature].dropna().to_numpy(float), reference[feature].dropna().to_numpy(float)

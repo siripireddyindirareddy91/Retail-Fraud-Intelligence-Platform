@@ -5,6 +5,11 @@ For the separate backend Vercel project and `FASTAPI_ENTRYPOINT_NOT_FOUND`, see
 the existing factory application without starting the container supervisor or
 worker. Discovery success alone does not provide durable storage or job execution.
 
+For the 5.9 GB Function bundle error, see [docs/VERCEL_BUNDLE_SIZE.md](docs/VERCEL_BUNDLE_SIZE.md).
+Vercel uses the default API dependency profile and `uv.lock`; separate research
+workers must install the research extra or the complete worker snapshot. Do not
+install the full worker snapshot in the Vercel API build.
+
 ## Vercel frontend and Railway backend
 
 This hosting profile is prepared in source. It is not a claim that a cloud deployment has passed verification. The frontend stays on Vercel; a single Railway application service runs the API and a separate worker process against PostgreSQL and one shared persistent volume. Keep this service at one replica: Railway volumes are not a shared filesystem across independently deployed services. Do not split API and worker onto unrelated local disks.

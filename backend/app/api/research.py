@@ -2,8 +2,6 @@ import json
 from typing import Literal
 from uuid import UUID
 
-import numpy as np
-import pandas as pd
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import Response
 from sqlalchemy import select
@@ -25,6 +23,7 @@ router = APIRouter(tags=["Research workflows"])
 
 @router.get("/analytics/overview")
 def analytics(request: Request, user: CurrentUser, db: DB):
+    import pandas as pd
     datasets = db.scalars(select(Dataset).where(Dataset.owner_id == user.id).order_by(Dataset.created_at.desc()).limit(5)).all()
     activity, categories = [], []
     if datasets:
@@ -76,6 +75,7 @@ def dataset_detail(dataset_id: UUID, user: CurrentUser, db: DB):
 
 @router.get("/datasets/{dataset_id}/preview")
 def preview_dataset(dataset_id: UUID, request: Request, user: CurrentUser, db: DB, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), q: str = Query("", max_length=100), label: int | None = Query(None, ge=0, le=1), min_amount: float = Query(0, ge=0), max_amount: float = Query(10000000, ge=0), start_at: str | None = None, end_at: str | None = None):
+    import pandas as pd
     dataset = owned(db, Dataset, dataset_id, user.id)
     frame = read_frame(db, request.app.state.settings, dataset)
     if q:
@@ -95,6 +95,7 @@ def preview_dataset(dataset_id: UUID, request: Request, user: CurrentUser, db: D
 
 @router.get("/datasets/{dataset_id}/statistics")
 def statistics(dataset_id: UUID, request: Request, user: CurrentUser, db: DB):
+    import pandas as pd
     frame = read_frame(db, request.app.state.settings, owned(db, Dataset, dataset_id, user.id))
     return {**validation(frame), "activity": records(frame.assign(day=pd.to_datetime(frame.transaction_timestamp, utc=True, format="ISO8601").dt.strftime("%Y-%m-%d")).groupby("day").agg(transactions=("is_fraud", "count"), fraud=("is_fraud", "sum")).reset_index()), "categories": records(frame.groupby("product_category").agg(transactions=("is_fraud", "count"), fraud=("is_fraud", "sum")).reset_index())}
 
@@ -181,6 +182,8 @@ def prediction_data(item):
 
 @router.post("/predictions")
 def single_prediction(payload: SinglePrediction, request: Request, user: CurrentUser, db: DB):
+    import numpy as np
+    import pandas as pd
     model = owned(db, MLModel, payload.model_id, user.id)
     if set(payload.features) != set(FEATURES):
         raise APIError(422, "feature_contract", "Supply exactly the model's canonical feature fields.", {"required": FEATURES})

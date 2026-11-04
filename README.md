@@ -52,7 +52,13 @@ Browser tests start an isolated real API, worker and temporary database; they ne
 - MODEL_EVALUATION.md: scientific methodology, score definitions and limitations.
 - INSTALLATION_GUIDE.md / DEPLOYMENT_GUIDE.md: local startup, optional containers and operations.
 - docs/VERCEL_BACKEND.md: FastAPI ASGI entrypoint, Vercel backend configuration and serverless limitations.
+- docs/VERCEL_BUNDLE_SIZE.md / docs/API_BUNDLE_MEASUREMENT.json: API/worker dependency profiles, import audit and measured Linux bundle components.
 - TESTING_GUIDE.md: reproducible checks.
 - docs/ACCEPTANCE.md: delivery status and verification boundaries.
 
 Use Python 3.12 and Node 22.12+ or Node 24 LTS. Exact dependency snapshots are included. Generated data, models, reports, secrets and runtime logs are ignored by Git. The source is organized under frontend/ and backend/app/research/ rather than empty domain directories.
+
+The default backend install is the API/CPU-inference profile. Full research
+workers need `pip install -e ".[research]"` from backend, or the full
+`backend/requirements.lock.txt` snapshot used by the container. Vercel should use
+the default `pyproject.toml` profile with `uv.lock`, without research extras.

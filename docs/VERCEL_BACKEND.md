@@ -60,11 +60,13 @@ local SQLite URL in a hosted environment. No credentials are supplied by this fi
   option and must not be used as a Vercel Function handler. Vercel Daemons are
   another possible worker platform, but their initial release has no persistent
   filesystem; moving there requires integration work.
-- **Packages:** Vercel reads Python dependencies from `pyproject.toml`.
-  `requirements.lock.txt` is the existing pip/container snapshot, not a Vercel
-  `uv.lock`. The Python 3.12 local environment passes dependency checks, but
-  Linux resolution and the actual Vercel bundle must still be verified. SDV,
-  PyTorch, SHAP, XGBoost, PyArrow and MLflow are large; no features were removed.
+- **Packages:** Vercel reads the default API dependencies from `pyproject.toml`
+  with the new `uv.lock`. Research workers install `.[research]` or the full
+  `requirements.lock.txt` snapshot. The API retains CPU XGBoost and all four
+  detector types and reads worker-written Parquet using Fastparquet. SDV,
+  PyTorch, SHAP, PyArrow, MLflow and PDF libraries are worker extras; no research
+  routes were removed. See VERCEL_BUNDLE_SIZE.md and API_BUNDLE_MEASUREMENT.json
+  for measured Linux components. The actual Vercel Function remains unverified.
   Standard Python Functions allow 500 MB uncompressed. Current large-function
   beta supports up to 5 GB when eligible/enabled; it does not provide durable
   disk or solve worker coordination.
