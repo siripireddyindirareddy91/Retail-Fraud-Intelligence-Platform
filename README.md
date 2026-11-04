@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Retail Fraud Intelligence Platform
 
 A working local research website for fictional retail transaction generation, fraud detection and controlled model robustness experiments.
@@ -52,12 +51,8 @@ Browser tests start an isolated real API, worker and temporary database; they ne
 - DATABASE_SCHEMA.md / API_DOCUMENTATION.md: persistence and API contracts.
 - MODEL_EVALUATION.md: scientific methodology, score definitions and limitations.
 - INSTALLATION_GUIDE.md / DEPLOYMENT_GUIDE.md: local startup, optional containers and operations.
+- docs/VERCEL_BACKEND.md: FastAPI ASGI entrypoint, Vercel backend configuration and serverless limitations.
 - TESTING_GUIDE.md: reproducible checks.
 - docs/ACCEPTANCE.md: delivery status and verification boundaries.
 
 Use Python 3.12 and Node 22.12+ or Node 24 LTS. Exact dependency snapshots are included. Generated data, models, reports, secrets and runtime logs are ignored by Git. The source is organized under frontend/ and backend/app/research/ rather than empty domain directories.
-
-
-=======
-# Retail-Fraud-Intelligence-Platform
->>>>>>> a555be3dd7c7a487e0335dc6efe41276bf9a8bca

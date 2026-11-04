@@ -1,5 +1,10 @@
 # Deployment and operations
 
+For the separate backend Vercel project and `FASTAPI_ENTRYPOINT_NOT_FOUND`, see
+[docs/VERCEL_BACKEND.md](docs/VERCEL_BACKEND.md). Its tested ASGI adapter exposes
+the existing factory application without starting the container supervisor or
+worker. Discovery success alone does not provide durable storage or job execution.
+
 ## Vercel frontend and Railway backend
 
 This hosting profile is prepared in source. It is not a claim that a cloud deployment has passed verification. The frontend stays on Vercel; a single Railway application service runs the API and a separate worker process against PostgreSQL and one shared persistent volume. Keep this service at one replica: Railway volumes are not a shared filesystem across independently deployed services. Do not split API and worker onto unrelated local disks.

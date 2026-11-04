@@ -19,9 +19,23 @@ The theme test now verifies persisted settings through the UI instead of reading
 
 - Production frontend build: passed after the fixes.
 - Frontend component tests: **36 passed**.
-- Latest backend JUnit record at runtime/qa/backend-final.xml: **61 passed, 1 skipped**, no failures/errors. The skipped check requires live PostgreSQL. This browser-focused change did not modify backend code.
-- Alembic and dependency checks previously passed; scientific-library deprecation warnings remain distinct from failures.
+- Full backend suite after adding the Vercel ASGI adapter: **66 passed, 1 skipped**, with 491 existing scientific-library/deprecation warnings. The skipped check requires live PostgreSQL. This supersedes the earlier 61-test passing JUnit snapshot.
+- Alembic check: no new upgrade operations detected. Dependency check: no broken requirements found.
 - Actual generated PDF was rendered with Poppler and visually inspected.
 - Docker and live PostgreSQL remain unverified here; the browser checks establish the local SQLite workflow, not a hosted deployment.
 
 Earlier incomplete browser runs were superseded by the clean 12-case passing run above. Reproduce checks using TESTING_GUIDE.md. Avoid concurrent scientific/browser suites on an 8 GB host.
+
+## Vercel entrypoint verification
+
+The independent import from backend/ loaded `asgi:app` as a real FastAPI instance
+with all 55 API paths. No test fixture, hosted supervisor or worker module was
+imported, and no database file was created. Five regression tests verify explicit
+entrypoint resolution, preservation of factory OpenAPI/middleware and HTTP
+behavior, no process/connection/migration startup, mandatory environment secrets,
+and production secure-cookie enforcement.
+
+Vercel CLI 65.11.0 is installed, but no backend project settings are linked
+locally. A Vercel cloud build, Linux dependency bundle, production database,
+shared storage and external-worker integration have not been verified by this
+entrypoint change. See docs/VERCEL_BACKEND.md before deploying.
