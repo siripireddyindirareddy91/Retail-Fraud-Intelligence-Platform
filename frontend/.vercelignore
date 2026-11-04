@@ -1,0 +1,10 @@
+# Only frontend source/build inputs and the generated routing configuration.
+/*
+!/src/
+!/public/
+!/index.html
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/vite.config.ts
+!/vercel.json

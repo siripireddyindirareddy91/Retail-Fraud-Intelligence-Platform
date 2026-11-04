@@ -1,0 +1,4 @@
+import { AlertCircle, LoaderCircle } from 'lucide-react';
+export function LoadingSkeleton({label='Loading workspace data'}:{label?:string}) {return <div aria-busy="true" aria-label={label} className="loading-skeleton"><span/><span/><span/></div>}
+export function ErrorState({message,retry}:{message:string;retry:()=>void}) {return <div role="alert" className="error-state"><AlertCircle size={19}/><p>{message}</p><button className="button secondary" onClick={retry}>Try again</button></div>}
+export function ProgressIndicator({completed,total,stage}:{completed:number;total?:number;stage:string}) {const percentage=total&&total>0?Math.min(100,Math.max(0,Math.floor(completed/total*100))):undefined;return <div className="progress-state"><LoaderCircle size={16}/><span>{stage}</span>{percentage===undefined?<span>In progress</span>:<progress aria-label={stage} value={completed} max={total}/>}</div>}

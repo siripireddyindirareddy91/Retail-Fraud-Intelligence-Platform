@@ -1,0 +1,83 @@
+name: retail-fraud-platform
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  environment: &backend-env
+    RF_ENVIRONMENT: ${RF_ENVIRONMENT:-development}
+    RF_JWT_SECRET: ${RF_JWT_SECRET:?Run the local initialization command first}
+    RF_DATABASE_URL: postgresql+psycopg://retail:${RF_POSTGRES_PASSWORD:?Run the PostgreSQL initialization command}@postgres:5432/retail_fraud
+    RF_ARTIFACT_ROOT: /data/artifacts
+    RF_COOKIE_SECURE: ${RF_COOKIE_SECURE:-false}
+    RF_MLFLOW_TRACKING_URI: http://mlflow:5000
+    RF_ALLOWED_ORIGINS: '["http://127.0.0.1:8080","http://localhost:8080"]'
+    MLFLOW_DISABLE_AGENT_HINT: "1"
+  volumes:
+    - artifacts:/data/artifacts
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: retail_fraud
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: ${RF_POSTGRES_PASSWORD:?Initialize PostgreSQL configuration}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./docker/mlflow-init.sql:/docker-entrypoint-initdb.d/10-mlflow.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U retail -d retail_fraud"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *backend
+    command: [python, -m, alembic, -c, alembic.ini, upgrade, head]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  mlflow:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      MLFLOW_BACKEND_STORE_URI: "postgresql+psycopg://retail:${RF_POSTGRES_PASSWORD}@postgres:5432/retail_tracking"
+    command: [python, -m, mlflow, server, --default-artifact-root, /data/artifacts/mlflow, --host, 0.0.0.0, --port, "5000", --allowed-hosts, "mlflow:5000,localhost:5000,127.0.0.1:5000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  api:
+    <<: *backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *backend
+    command: [python, -m, app.workers.runner]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mlflow:
+        condition: service_healthy
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  postgres:
+  artifacts:

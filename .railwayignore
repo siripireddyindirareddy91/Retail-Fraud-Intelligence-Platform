@@ -1,0 +1,16 @@
+# Upload backend source only; no local accounts, dependencies or research data.
+/*
+!/backend/
+!/railway.json
+!/.dockerignore
+/backend/.venv/
+/backend/.pytest_cache/
+/backend/*.egg-info/
+**/__pycache__/
+**/*.pyc
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/.env
+**/.env.*
+**/*.log

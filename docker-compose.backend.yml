@@ -1,0 +1,54 @@
+name: retail-fraud-foundation
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  environment: &backend-env
+    RF_ENVIRONMENT: development
+    RF_JWT_SECRET: ${RF_JWT_SECRET:?Initialize the local environment first}
+    RF_DATABASE_URL: postgresql+psycopg://retail:${RF_POSTGRES_PASSWORD:?Run python -m app.cli init-postgres}@postgres:5432/retail_fraud
+    RF_ARTIFACT_ROOT: /data/artifacts
+    RF_COOKIE_SECURE: "false"
+  volumes:
+    - artifacts:/data/artifacts
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: retail_fraud
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: ${RF_POSTGRES_PASSWORD:?Initialize PostgreSQL configuration}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U retail -d retail_fraud"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *backend
+    command: [python, -m, alembic, -c, alembic.ini, upgrade, head]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  api:
+    <<: *backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *backend
+    command: [python, -m, app.workers.runner]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+volumes:
+  postgres:
+  artifacts:
