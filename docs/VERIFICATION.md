@@ -1,5 +1,17 @@
 # Verification record — 4 November 2026
 
+## Vercel production inspection
+
+Latest production setup supersedes the missing-configuration findings below: Free Neon PostgreSQL `retail-fraud-postgres` was created and connected only to backend Production. Secrets are in provider settings. Existing Alembic migrations were rendered to PostgreSQL SQL without credentials and executed once in the Neon SQL editor against the new empty database. The stable backend `/api/v1/health/live` returns `status=ok`; `/api/v1/health/ready` returns `status=ready`, `database=connected`, `schema_revision=0003_streams`. This verifies a live PostgreSQL connection and applied revision, not the full opt-in PostgreSQL test suite or research execution. No production test account was created.
+
+The readiness-checked frontend preparation script generated `frontend/vercel.json` for `https://backend-opal-kappa-29.vercel.app`. This non-secret configuration is explicitly tracked for Git deployments, with API proxy before the SPA fallback. Frontend deployment verification is pending.
+
+- Commit `5df5160`, deployment `FAW27CGfkdSLhVPDTKY3pPd89Ebp`: Ready after a cache-free redeploy. Build logs explicitly report cache skipped and `API_INSTALL_PROFILE=web; research_packages=0`.
+- Vercel deployment Summary reports one Python 3.12 Function `/fastapi`, **18.5 MB**. This is the deployed size shown by Vercel; the separate 15.90 MB build-cache figure is not the Function size.
+- Live request to `/api/v1/health/live` fails with `500 FUNCTION_INVOCATION_FAILED`. Runtime logs identify missing `RF_JWT_SECRET` during Settings initialization. The project Environment Variables page shows no configured variables. Build readiness does not establish runtime health.
+- Production PostgreSQL configuration/migrations, authenticated endpoints, research service and frontend proxy remain unverified. No production account, database or research data was created or modified during inspection.
+- Frontend uses same-origin `/api/v1` for Axios and fetch/SSE. No generated `frontend/vercel.json` exists locally. The existing preparation script requires actual backend readiness before generating the proxy; do not bypass that check or switch only Axios to a separate origin.
+
 ## Final browser acceptance
 
 - Playwright: **12 passed (3.4 minutes)** in one complete clean run, using one worker.

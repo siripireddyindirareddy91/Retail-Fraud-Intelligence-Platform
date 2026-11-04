@@ -2,6 +2,8 @@
 
 A working local research website for fictional retail transaction generation, fraud detection and controlled model robustness experiments.
 
+Vercel backend packaging is verified at 18.5 MB for commit `5df5160`. Production liveness and readiness now pass against Neon PostgreSQL at schema `0003_streams`. Hosted authentication, research execution and frontend connectivity still require verification. See [verification notes](docs/VERIFICATION.md).
+
 ## Open the website
 
 After dependency installation (see INSTALLATION_GUIDE.md):

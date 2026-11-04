@@ -1,5 +1,7 @@
 # Deployment and operations
 
+For the Vercel API's production database connection, migration commands and same-origin frontend proxy, follow [Railway PostgreSQL setup](docs/RAILWAY_POSTGRES_SETUP.md). Production database connectivity is not yet verified.
+
 For the separate backend Vercel project and `FASTAPI_ENTRYPOINT_NOT_FOUND`, see
 [docs/VERCEL_BACKEND.md](docs/VERCEL_BACKEND.md). Its tested ASGI adapter exposes
 the existing factory application without starting the container supervisor or
