@@ -18,6 +18,26 @@ def test_hosted_accepts_exact_https_origin():
     assert valid_origin("https://retail-research.vercel.app")
 
 
+def test_pc_host_binds_only_loopback_and_preserves_separate_worker(settings, monkeypatch):
+    from app import hosted
+    from alembic import command
+    captured = []
+    monkeypatch.setattr(hosted, "prepare_environment", lambda: (settings, 8010))
+    monkeypatch.setattr(command, "upgrade", lambda *args: None)
+    monkeypatch.setattr(hosted.signal, "signal", lambda *args: None)
+    monkeypatch.setattr(hosted, "supervise", lambda commands, stop: captured.extend(commands) or 0)
+    monkeypatch.setenv("RF_BIND_HOST", "127.0.0.1")
+    assert hosted.main() == 0
+    assert captured[0] == [sys.executable, "-m", "app.workers.runner"]
+    api = captured[1]
+    assert api[api.index("--host") + 1] == "127.0.0.1"
+    assert api[api.index("--port") + 1] == "8010"
+    monkeypatch.setenv("RF_BIND_HOST", "invalid-host")
+    captured.clear()
+    assert hosted.main() == 1
+    assert captured == []
+
+
 def test_hosted_requires_a_persistent_volume(monkeypatch):
     monkeypatch.delenv("RAILWAY_VOLUME_MOUNT_PATH", raising=False)
     monkeypatch.delenv("RF_VOLUME_ROOT", raising=False)

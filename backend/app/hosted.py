@@ -99,12 +99,15 @@ def main():
         config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
         config.attributes["database_url"] = settings.database_url
         command.upgrade(config, "head")
+        bind_host = os.environ.get("RF_BIND_HOST", "0.0.0.0")
+        if bind_host not in ("127.0.0.1", "0.0.0.0"):
+            raise ValueError("RF_BIND_HOST must be 127.0.0.1 or 0.0.0.0")
         stop = threading.Event()
         for name in (signal.SIGTERM, signal.SIGINT):
             signal.signal(name, lambda *_: stop.set())
         return supervise([
             [sys.executable, "-m", "app.workers.runner"],
-            [sys.executable, "-m", "uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", str(port), "--no-access-log", "--no-proxy-headers"],
+            [sys.executable, "-m", "uvicorn", "app.main:create_app", "--factory", "--host", bind_host, "--port", str(port), "--no-access-log", "--no-proxy-headers"],
         ], stop)
     except Exception as error:
         # Configuration and connection exceptions may contain credentials.
