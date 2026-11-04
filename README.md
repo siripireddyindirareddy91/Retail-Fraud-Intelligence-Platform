@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Retail Fraud Intelligence Platform
 
 A working local research website for fictional retail transaction generation, fraud detection and controlled model robustness experiments.
@@ -57,3 +58,6 @@ Browser tests start an isolated real API, worker and temporary database; they ne
 Use Python 3.12 and Node 22.12+ or Node 24 LTS. Exact dependency snapshots are included. Generated data, models, reports, secrets and runtime logs are ignored by Git. The source is organized under frontend/ and backend/app/research/ rather than empty domain directories.
 
 
+=======
+# Retail-Fraud-Intelligence-Platform
+>>>>>>> a555be3dd7c7a487e0335dc6efe41276bf9a8bca
