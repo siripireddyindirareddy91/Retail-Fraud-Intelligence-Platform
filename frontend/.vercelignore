@@ -1,10 +1,16 @@
-# Only frontend source/build inputs and the generated routing configuration.
-/*
-!/src/
-!/public/
-!/index.html
-!/package.json
-!/package-lock.json
-!/tsconfig.json
-!/vite.config.ts
-!/vercel.json
+# Exclude generated/private files without excluding the frontend directory when
+# Vercel applies these rules relative to the repository checkout.
+**/node_modules/**
+**/dist/**
+**/.env
+**/.env.*
+**/.git/**
+**/.venv/**
+**/.venv-*/**
+**/__pycache__/**
+**/runtime/**
+**/artifacts/**
+**/datasets/**
+**/*.db
+**/*.log
+backend/**
