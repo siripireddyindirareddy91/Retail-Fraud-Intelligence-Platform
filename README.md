@@ -58,7 +58,10 @@ Browser tests start an isolated real API, worker and temporary database; they ne
 
 Use Python 3.12 and Node 22.12+ or Node 24 LTS. Exact dependency snapshots are included. Generated data, models, reports, secrets and runtime logs are ignored by Git. The source is organized under frontend/ and backend/app/research/ rather than empty domain directories.
 
-The default backend install is the API/CPU-inference profile. Full research
+The default backend install is web/API only, without scientific libraries. Full research
 workers need `pip install -e ".[research]"` from backend, or the full
 `backend/requirements.lock.txt` snapshot used by the container. Vercel should use
-the default `pyproject.toml` profile with `uv.lock`, without research extras.
+the explicit `scripts/install_vercel_api.py` installer and frozen `uv.lock`,
+without research extras. Configure `RF_RESEARCH_API_ORIGIN` for synchronous
+research operations on the full backend; unavailable research execution returns
+a clear 503. Background research still uses the real separate worker.

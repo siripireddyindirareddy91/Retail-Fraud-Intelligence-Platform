@@ -10,6 +10,7 @@ from ..core.errors import APIError
 from ..models import Artifact, AuditEvent, AuthSession, Dataset, Experiment, Job, MLModel, Notification, Prediction, StreamEvent, StreamSession, User, UserSettings, now
 from ..schemas import ExperimentCreate, NotificationUpdate, ProfileUpdate, SettingsUpdate, UserUpdate
 from ..services.artifacts import safe_path
+from ..services.research_runtime import forward_if_needed
 
 router = APIRouter(tags=["Workspace"])
 
@@ -88,6 +89,9 @@ def download(artifact_id: UUID, request: Request, user: CurrentUser, db: DB):
     item = owned(db, Artifact, artifact_id, user.id)
     path = safe_path(request.app.state.settings.artifact_root, item.storage_key)
     if not path.is_file():
+        if request.app.state.settings.research_api_origin:
+            db.rollback()
+            return forward_if_needed(request, force=True, stream="file")
         raise APIError(410, "artifact_missing", "The artifact file is missing. Run an integrity check.")
     return FileResponse(path, media_type=item.content_type, filename=item.name, headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"})
 

@@ -2,12 +2,15 @@
 
 Status: architecture approved by the user on 4 November 2026. The frontend, authenticated backend, generation, detection, robustness, explanation, monitoring and report workflows are implemented. Local verification uses SQLite and a separate bounded worker. PostgreSQL/Docker runtime verification remains pending. Deployment topology below describes the prepared container configuration rather than a verified hosted service.
 
-The Vercel API dependency profile now retains CPU inference and dataset reads
-while the optional `research` extra supplies the full worker engines. API startup
-loads no scientific libraries; research jobs retain their separate worker path.
-The API reads worker-written Parquet through Fastparquet and uses official
-CPU-only XGBoost. See docs/VERCEL_BUNDLE_SIZE.md for measured components and the
-unverified cloud size/storage boundaries. No durable remote store is implied.
+The default Vercel API profile is web/database/auth only. All scientific libraries
+are in the optional `research` extra. A frozen, explicit installer rejects research
+packages in the Function. Research submissions require a fresh worker heartbeat
+in thin/readiness-enforced deployments. Synchronous scientific operations can use
+the existing full backend over `RF_RESEARCH_API_ORIGIN`, sharing PostgreSQL and
+JWT configuration while keeping artifacts on the research service's volume.
+Both sides enforce authorization; missing execution returns a clear 503. Full
+local/container research remains available. See docs/VERCEL_BUNDLE_SIZE.md for
+tested delegation and measured components; cloud deployment remains unverified.
 
 ## 1. Project understanding and scope
 

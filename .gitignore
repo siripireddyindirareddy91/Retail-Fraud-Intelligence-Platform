@@ -19,3 +19,4 @@ datasets/
 *.log
 .vercel/
 frontend/vercel.json
+backend/build/

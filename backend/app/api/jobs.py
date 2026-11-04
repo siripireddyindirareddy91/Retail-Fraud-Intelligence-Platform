@@ -15,6 +15,7 @@ from ..models import AuditEvent, AuthSession, Job, JobEvent, User, now
 from ..schemas import JobSubmission
 from ..services.jobs import TERMINAL, finish, job_data, record_event
 from ..services.rate_limit import enforce
+from ..services.research_runtime import require_worker
 
 router = APIRouter(prefix="/jobs", tags=["Background jobs"])
 
@@ -25,6 +26,7 @@ def submit(payload: JobSubmission, request: Request, user: CurrentUser, db: DB, 
         existing = db.scalar(select(Job).where(Job.owner_id == user.id, Job.idempotency_key == idempotency_key))
         if existing:
             return submission_data(existing)
+    require_worker(db, request.app.state.settings)
     enforce(db, f"job:{user.id}", request.app.state.settings.job_limit, seconds=60)
     job = Job(owner_id=user.id, kind=payload.kind, idempotency_key=idempotency_key)
     db.add(job)

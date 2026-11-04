@@ -9,7 +9,7 @@ SCHEMA_REVISION = "0003_streams"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=ROOT / ".env", env_prefix="RF_", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ROOT / ".env", env_prefix="RF_", extra="ignore", hide_input_in_errors=True)
 
     environment: Literal["development", "test", "production"] = "development"
     database_url: str = f"sqlite:///{(ROOT / 'runtime' / 'platform.db').as_posix()}"
@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     sse_max_seconds: int = Field(default=300, ge=1, le=900)
     max_json_bytes: int = Field(default=65536, ge=1024, le=1048576)
     mlflow_tracking_uri: str = f"sqlite:///{(ROOT / 'runtime' / 'mlflow.db').as_posix()}"
+    research_api_origin: str | None = None
 
     @model_validator(mode="after")
     def secure_configuration(self):
@@ -41,5 +42,12 @@ class Settings(BaseSettings):
             raise ValueError("Production requires RF_COOKIE_SECURE=true and HTTPS")
         if not self.database_url.startswith(("sqlite:///", "postgresql+psycopg://")):
             raise ValueError("Use sqlite:/// or postgresql+psycopg://")
+        if self.research_api_origin:
+            from urllib.parse import urlsplit
+            origin = urlsplit(self.research_api_origin)
+            test_loopback = self.environment == "test" and origin.scheme == "http" and origin.hostname in ("localhost", "127.0.0.1")
+            if (origin.scheme != "https" and not test_loopback) or not origin.hostname or origin.username or origin.password or origin.query or origin.fragment or origin.path not in ("", "/"):
+                raise ValueError("RF_RESEARCH_API_ORIGIN must be an HTTPS origin without credentials, path or query")
+            self.research_api_origin = self.research_api_origin.rstrip("/")
         return self
 

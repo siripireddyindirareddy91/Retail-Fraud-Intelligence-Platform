@@ -14,6 +14,7 @@ from ..research.ml import scores
 from ..research.schemas import Generation, StreamConfig
 from ..research.storage import read_bundle, records
 from ..services.rate_limit import enforce
+from ..services.research_runtime import forward_if_needed, modules_available
 
 router = APIRouter(prefix="/streams", tags=["Simulated transaction streams"])
 
@@ -22,6 +23,9 @@ router = APIRouter(prefix="/streams", tags=["Simulated transaction streams"])
 def start_stream(payload: StreamConfig, request: Request, user: CurrentUser, db: DB):
     if payload.model_id:
         owned(db, MLModel, payload.model_id, user.id)
+    delegated = forward_if_needed(request, "numpy", "pandas", payload=payload.model_dump(mode="json"))
+    if delegated is not None:
+        return delegated
     enforce(db, f"stream:{user.id}", 10, 60)
     stream = StreamSession(owner_id=user.id, model_id=str(payload.model_id) if payload.model_id else None, config=payload.model_dump(mode="json"), expires_at=now() + timedelta(hours=2))
     db.add(stream)
@@ -47,6 +51,11 @@ def stream_state(stream_id: UUID, user: CurrentUser, db: DB):
 @router.get("/{stream_id}/events")
 def stream_events(stream_id: UUID, request: Request, user: CurrentUser, db: DB, after: int = Query(0, ge=0), last_event_id: int | None = Header(None, ge=0)):
     stream = owned(db, StreamSession, stream_id, user.id)
+    if request.app.state.settings.research_api_origin or not modules_available("numpy", "pandas", "sklearn"):
+        db.rollback()
+    delegated = forward_if_needed(request, "numpy", "pandas", "sklearn", stream=True)
+    if delegated is not None:
+        return delegated
     owner_id, auth_id, config = user.id, request.state.auth_session_id, stream.config
     settings, sessions = request.app.state.settings, request.app.state.sessions
     model = db.get(MLModel, stream.model_id) if stream.model_id else None

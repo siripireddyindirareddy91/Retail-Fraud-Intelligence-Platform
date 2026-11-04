@@ -17,16 +17,20 @@ from ..research.storage import clean, read_bundle, read_frame, records
 from ..schemas import Input
 from ..services.jobs import record_event
 from ..services.rate_limit import enforce
+from ..services.research_runtime import forward_if_needed, require_worker
 
 router = APIRouter(tags=["Research workflows"])
 
 
 @router.get("/analytics/overview")
 def analytics(request: Request, user: CurrentUser, db: DB):
-    import pandas as pd
     datasets = db.scalars(select(Dataset).where(Dataset.owner_id == user.id).order_by(Dataset.created_at.desc()).limit(5)).all()
     activity, categories = [], []
     if datasets:
+        delegated = forward_if_needed(request, "pandas", "fastparquet")
+        if delegated is not None:
+            return delegated
+        import pandas as pd
         frame = read_frame(db, request.app.state.settings, datasets[0])
         frame["day"] = pd.to_datetime(frame.transaction_timestamp, utc=True, format="ISO8601").dt.strftime("%Y-%m-%d")
         for day, group in frame.groupby("day"):
@@ -43,6 +47,7 @@ def enqueue(db, request, user, kind, payload):
     for field, model in [("dataset_id", Dataset), ("reference_dataset_id", Dataset), ("model_id", MLModel), ("generative_model_id", GenerativeModel), ("run_id", ResearchRun), ("prediction_id", Prediction)]:
         if config.get(field):
             owned(db, model, config[field], user.id)
+    require_worker(db, request.app.state.settings)
     active = db.scalars(select(Job).where(Job.owner_id == user.id, Job.state.in_(["queued", "running"]))).all()
     if len(active) >= 5:
         raise APIError(429, "queue_limit", "At most five jobs may be queued or running per account.")
@@ -75,8 +80,11 @@ def dataset_detail(dataset_id: UUID, user: CurrentUser, db: DB):
 
 @router.get("/datasets/{dataset_id}/preview")
 def preview_dataset(dataset_id: UUID, request: Request, user: CurrentUser, db: DB, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), q: str = Query("", max_length=100), label: int | None = Query(None, ge=0, le=1), min_amount: float = Query(0, ge=0), max_amount: float = Query(10000000, ge=0), start_at: str | None = None, end_at: str | None = None):
-    import pandas as pd
     dataset = owned(db, Dataset, dataset_id, user.id)
+    delegated = forward_if_needed(request, "pandas", "fastparquet")
+    if delegated is not None:
+        return delegated
+    import pandas as pd
     frame = read_frame(db, request.app.state.settings, dataset)
     if q:
         frame = frame[frame.transaction_id.str.contains(q, regex=False) | frame.customer_id.str.contains(q, regex=False)]
@@ -95,14 +103,22 @@ def preview_dataset(dataset_id: UUID, request: Request, user: CurrentUser, db: D
 
 @router.get("/datasets/{dataset_id}/statistics")
 def statistics(dataset_id: UUID, request: Request, user: CurrentUser, db: DB):
+    dataset = owned(db, Dataset, dataset_id, user.id)
+    delegated = forward_if_needed(request, "pandas", "fastparquet")
+    if delegated is not None:
+        return delegated
     import pandas as pd
-    frame = read_frame(db, request.app.state.settings, owned(db, Dataset, dataset_id, user.id))
+    frame = read_frame(db, request.app.state.settings, dataset)
     return {**validation(frame), "activity": records(frame.assign(day=pd.to_datetime(frame.transaction_timestamp, utc=True, format="ISO8601").dt.strftime("%Y-%m-%d")).groupby("day").agg(transactions=("is_fraud", "count"), fraud=("is_fraud", "sum")).reset_index()), "categories": records(frame.groupby("product_category").agg(transactions=("is_fraud", "count"), fraud=("is_fraud", "sum")).reset_index())}
 
 
 @router.get("/datasets/{dataset_id}/download")
 def dataset_download(dataset_id: UUID, request: Request, user: CurrentUser, db: DB, format: Literal["csv", "json"] = "csv"):
-    frame = read_frame(db, request.app.state.settings, owned(db, Dataset, dataset_id, user.id))
+    dataset = owned(db, Dataset, dataset_id, user.id)
+    delegated = forward_if_needed(request, "pandas", "fastparquet", stream="file")
+    if delegated is not None:
+        return delegated
+    frame = read_frame(db, request.app.state.settings, dataset)
     payload = frame.to_csv(index=False) if format == "csv" else frame.to_json(orient="records")
     return Response(payload, media_type="text/csv" if format == "csv" else "application/json", headers={"Content-Disposition": f'attachment; filename="synthetic-transactions-{dataset_id}.{format}"'})
 
@@ -182,20 +198,24 @@ def prediction_data(item):
 
 @router.post("/predictions")
 def single_prediction(payload: SinglePrediction, request: Request, user: CurrentUser, db: DB):
-    import numpy as np
-    import pandas as pd
+    from math import isfinite
     model = owned(db, MLModel, payload.model_id, user.id)
     if set(payload.features) != set(FEATURES):
         raise APIError(422, "feature_contract", "Supply exactly the model's canonical feature fields.", {"required": FEATURES})
     try:
         features = {key: float(payload.features[key]) for key in NUMERIC}
-        if any(not np.isfinite(value) or value < 0 or value > 10000000 for value in features.values()):
+        if any(not isfinite(value) or value < 0 or value > 10000000 for value in features.values()):
             raise ValueError()
         features.update({key: str(payload.features[key])[:50] for key in CATEGORICAL})
         if features["hour"] > 23 or features["quantity"] < 1:
             raise ValueError()
     except (ValueError, TypeError):
         raise APIError(422, "feature_values", "Feature values must satisfy nonnegative finite numeric and transaction constraints.")
+    runtime = ["pandas", "sklearn"] + (["xgboost"] if model.algorithm == "xgboost" else [])
+    delegated = forward_if_needed(request, *runtime, payload=payload.model_dump(mode="json"))
+    if delegated is not None:
+        return delegated
+    import pandas as pd
     bundle = read_bundle(db, request.app.state.settings, model.artifact_id)
     score = float(scores(bundle, pd.DataFrame([features]))[0])
     anomaly = bundle["algorithm"] == "isolation_forest"

@@ -34,9 +34,10 @@ root `.env`. Configure each Vercel environment independently before building.
 | `RF_COOKIE_SECURE` | Set to `true`; production import fails if false. |
 | `RF_DATABASE_URL` | Set a real PostgreSQL SQLAlchemy URI beginning `postgresql+psycopg://`, with the provider's required TLS options. The adapter does not perform the hosted supervisor's URL conversion. |
 | `RF_ALLOWED_ORIGINS` | JSON list of exact HTTPS frontend origins. No wildcard or trailing slash. |
-| `RF_ARTIFACT_ROOT` | Explicit filesystem path. `/tmp` is scratch space only, not a durable shared artifact solution. |
-| `RF_MLFLOW_TRACKING_URI` | Configure external durable tracking when used; the default local SQLite database is unsuitable for serverless persistence. |
-| `RF_REQUIRE_WORKER_READY` | Set `true` only when an external worker and genuinely shared artifact storage are integrated. Otherwise the existing default false checks DB/schema only, not full research readiness. |
+| `RF_RESEARCH_API_ORIGIN` | HTTPS origin of the full research backend, with the same database and JWT secret/issuer/audience. Keep unset on that service itself. No scientific operations execute locally in the web-only profile. |
+| `RF_ARTIFACT_ROOT` | Explicit durable filesystem path on the research service/worker. The thin API can delegate artifact downloads. `/tmp` is not durable storage. |
+| `RF_MLFLOW_TRACKING_URI` | Configure durable tracking on the research worker; the thin API does not import MLflow. |
+| `RF_REQUIRE_WORKER_READY` | When true, check the real worker and, if configured, research-service readiness. Without delegation the original local storage check remains. False checks DB/schema only. |
 
 A valid secret is sufficient to instantiate the lazy database engine locally;
 that does not prove database connectivity or readiness. Do not leave the default
@@ -52,8 +53,9 @@ local SQLite URL in a hosted environment. No credentials are supplied by this fi
   local filesystem paths. PostgreSQL alone does not share those files between
   a Vercel API and an external worker. Durable remote storage requires an
   implemented storage adapter; simply setting an S3/Blob URL as a local path
-  will not work. Research routes are retained, not represented as operational
-  without their storage/worker dependencies.
+  will not work. Alternatively the implemented `RF_RESEARCH_API_ORIGIN` boundary
+  keeps artifact access on the full service/worker volume. Research routes return
+  a safe 503 until their execution dependencies are available.
 - **Workers:** `python -m app.workers.runner` must run separately in a suitable
   worker host. Queued research jobs do not execute merely because the API is
   deployed. `python -m app.hosted` remains the separate container deployment
@@ -61,12 +63,13 @@ local SQLite URL in a hosted environment. No credentials are supplied by this fi
   another possible worker platform, but their initial release has no persistent
   filesystem; moving there requires integration work.
 - **Packages:** Vercel reads the default API dependencies from `pyproject.toml`
-  with the new `uv.lock`. Research workers install `.[research]` or the full
-  `requirements.lock.txt` snapshot. The API retains CPU XGBoost and all four
-  detector types and reads worker-written Parquet using Fastparquet. SDV,
-  PyTorch, SHAP, PyArrow, MLflow and PDF libraries are worker extras; no research
-  routes were removed. See VERCEL_BUNDLE_SIZE.md and API_BUNDLE_MEASUREMENT.json
-  for measured Linux components. The actual Vercel Function remains unverified.
+  through the explicit web-only installer and frozen `uv.lock`. Research workers
+  and full services install `.[research]` or the full `requirements.lock.txt`
+  snapshot. All scientific libraries, including CPU XGBoost and Parquet readers,
+  are research extras. Detector implementations and route paths are retained;
+  the thin API delegates execution or returns a clear 503. See
+  VERCEL_BUNDLE_SIZE.md and API_BUNDLE_MEASUREMENT.json for measured components.
+  The actual Vercel Function remains unverified.
   Standard Python Functions allow 500 MB uncompressed. Current large-function
   beta supports up to 5 GB when eligible/enabled; it does not provide durable
   disk or solve worker coordination.

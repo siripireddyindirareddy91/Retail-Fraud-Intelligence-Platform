@@ -1,9 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "python scripts/install_vercel_api.py",
   "functions": {
     "asgi.py": {
       "includeFiles": "app/**",
-      "excludeFiles": "{.venv/**,.venv-*/**,tests/**,scripts/**,.pytest_cache/**,**/__pycache__/**,**/*.pyc,*.egg-info/**,.env,.env.*,runtime/**,artifacts/**,datasets/**,*.db,*.db-shm,*.db-wal,*.log}"
+      "excludeFiles": "{.venv/**,.venv-*/**,build/**,tests/**,scripts/**,.pytest_cache/**,**/__pycache__/**,**/*.pyc,*.egg-info/**,.env,.env.*,runtime/**,artifacts/**,datasets/**,*.db,*.db-shm,*.db-wal,*.log}"
     }
   }
 }

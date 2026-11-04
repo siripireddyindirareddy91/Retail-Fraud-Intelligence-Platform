@@ -7,7 +7,7 @@
 .env
 .env.*
 tests/
-scripts/
+build/
 runtime/
 artifacts/
 datasets/

@@ -1,11 +1,12 @@
 {
   "target": "Linux x86_64 CPython 3.12 wheels, downloaded on Windows",
-  "wheel_count": 48,
-  "dependency_bytes": 338080245,
-  "application_source_bytes": 954066,
-  "additional_pyc_bytes": 109992473,
-  "estimated_component_bytes": 449026784,
-  "vercel_runtime_overhead": "not measured",
+  "wheel_count": 36,
+  "dependency_bytes": 54963412,
+  "application_source_bytes": 962984,
+  "additional_pyc_bytes": 23678630,
+  "estimated_component_bytes": 79605026,
+  "vercel_runtime_package_included": "0.24.1",
+  "vercel_runtime_overhead": "published runtime wheel counted when present; remaining platform wrapper overhead not measured",
   "actual_vercel_bundle_verified": false,
   "wheels": [
     {
@@ -45,6 +46,12 @@
       "additional_pyc_bytes": 229
     },
     {
+      "wheel": "certifi-2026.10.23-py3-none-any.whl",
+      "sha256": "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1",
+      "uncompressed_bytes": 244625,
+      "additional_pyc_bytes": 4420
+    },
+    {
       "wheel": "cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
       "sha256": "c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf",
       "uncompressed_bytes": 735169,
@@ -55,18 +62,6 @@
       "sha256": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360",
       "uncompressed_bytes": 447719,
       "additional_pyc_bytes": 504419
-    },
-    {
-      "wheel": "cloudpickle-3.1.2-py3-none-any.whl",
-      "sha256": "9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a",
-      "uncompressed_bytes": 68989,
-      "additional_pyc_bytes": 56459
-    },
-    {
-      "wheel": "cramjam-2.14.0-cp312-cp312-manylinux_2_28_x86_64.whl",
-      "sha256": "d42ed4ab609a46f407fa647c9f3b73473113c848ec007825b6ee25183033323b",
-      "uncompressed_bytes": 4510970,
-      "additional_pyc_bytes": 716
     },
     {
       "wheel": "dnspython-2.9.2-py3-none-any.whl",
@@ -87,22 +82,10 @@
       "additional_pyc_bytes": 655558
     },
     {
-      "wheel": "fastparquet-2026.9.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
-      "sha256": "97ff970749affeedc871bd7b277e4173344b6587b7823aac780ea6d298d78560",
-      "uncompressed_bytes": 8982109,
-      "additional_pyc_bytes": 289666
-    },
-    {
       "wheel": "filelock-3.32.7-py3-none-any.whl",
       "sha256": "65ff0d0190ea42038b32bda4b77834fb05be2cad4c5b9b01aa4dfb3614536e52",
       "uncompressed_bytes": 355607,
       "additional_pyc_bytes": 392191
-    },
-    {
-      "wheel": "fsspec-2026.9.0-py3-none-any.whl",
-      "sha256": "8dd6e646e99ea382bd85f97a45e6b526a442d79423a7dc673f1e2756d05fcb5f",
-      "uncompressed_bytes": 810582,
-      "additional_pyc_bytes": 1006727
     },
     {
       "wheel": "greenlet-3.5.6-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
@@ -117,16 +100,22 @@
       "additional_pyc_bytes": 80536
     },
     {
+      "wheel": "httpcore-1.0.9-py3-none-any.whl",
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55",
+      "uncompressed_bytes": 288016,
+      "additional_pyc_bytes": 335245
+    },
+    {
+      "wheel": "httpx-0.28.1-py3-none-any.whl",
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad",
+      "uncompressed_bytes": 295303,
+      "additional_pyc_bytes": 337230
+    },
+    {
       "wheel": "idna-3.20-py3-none-any.whl",
       "sha256": "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c",
       "uncompressed_bytes": 342091,
       "additional_pyc_bytes": 174624
-    },
-    {
-      "wheel": "joblib-1.6.0-py3-none-any.whl",
-      "sha256": "3dbbf9f6e4b592a2357b854608e980fe6390d131d7a82f011a377ef2ebef7aba",
-      "uncompressed_bytes": 921902,
-      "additional_pyc_bytes": 1009762
     },
     {
       "wheel": "mako-1.4.3-py3-none-any.whl",
@@ -141,34 +130,10 @@
       "additional_pyc_bytes": 21595
     },
     {
-      "wheel": "narwhals-2.28.0-py3-none-any.whl",
-      "sha256": "1f69d6385ec30e2fa6e1fdeb37c562ecabd0f713f6f3e3b58a668c5c9df9567f",
-      "uncompressed_bytes": 2079651,
-      "additional_pyc_bytes": 2664015
-    },
-    {
-      "wheel": "numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
-      "sha256": "fbde6962867ee75b48b0ee29b2b9372ec5d617799dbaf38e82dc0596f2f7738a",
-      "uncompressed_bytes": 56387772,
-      "additional_pyc_bytes": 11957638
-    },
-    {
       "wheel": "opentelemetry_api-1.45.2-py3-none-any.whl",
       "sha256": "2cbd737377e710ee740d261c94e93fa0f08e6d037c18f17513cc0a2d94479a34",
       "uncompressed_bytes": 196771,
       "additional_pyc_bytes": 215903
-    },
-    {
-      "wheel": "packaging-26.3-py3-none-any.whl",
-      "sha256": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c",
-      "uncompressed_bytes": 499179,
-      "additional_pyc_bytes": 493804
-    },
-    {
-      "wheel": "pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
-      "sha256": "b3d11d2fda7eb164ef27ffc14b4fcab16a80e1ce67e9f57e19ec0afaf715ba89",
-      "uncompressed_bytes": 43427009,
-      "additional_pyc_bytes": 27726934
     },
     {
       "wheel": "psycopg-3.3.8-py3-none-any.whl",
@@ -213,40 +178,10 @@
       "additional_pyc_bytes": 126952
     },
     {
-      "wheel": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
-      "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427",
-      "uncompressed_bytes": 441579,
-      "additional_pyc_bytes": 299163
-    },
-    {
       "wheel": "python_dotenv-1.2.4-py3-none-any.whl",
       "sha256": "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc",
       "uncompressed_bytes": 65897,
       "additional_pyc_bytes": 50142
-    },
-    {
-      "wheel": "pytz-2026.6-py2.py3-none-any.whl",
-      "sha256": "7fed3fee8fd6bd4a2b7b75a8d56021d0624127bf69bd5691f115db929ac570b3",
-      "uncompressed_bytes": 1002659,
-      "additional_pyc_bytes": 70908
-    },
-    {
-      "wheel": "scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
-      "sha256": "e5d7b18a5b9dca241a74695f3275fa4c895a9dadc72b3d8df5fa9d1083c9b83e",
-      "uncompressed_bytes": 31047585,
-      "additional_pyc_bytes": 15325892
-    },
-    {
-      "wheel": "scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
-      "sha256": "f55fa87b6c612ecd6b058f167c53231b1d14e412efe361d3d6e38b3631c73218",
-      "uncompressed_bytes": 111939552,
-      "additional_pyc_bytes": 26976871
-    },
-    {
-      "wheel": "six-1.17.0-py2.py3-none-any.whl",
-      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
-      "uncompressed_bytes": 37975,
-      "additional_pyc_bytes": 41285
     },
     {
       "wheel": "sqlalchemy-2.0.57-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
@@ -259,12 +194,6 @@
       "sha256": "478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4",
       "uncompressed_bytes": 275681,
       "additional_pyc_bytes": 373334
-    },
-    {
-      "wheel": "threadpoolctl-3.7.0-py3-none-any.whl",
-      "sha256": "cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be",
-      "uncompressed_bytes": 93757,
-      "additional_pyc_bytes": 72165
     },
     {
       "wheel": "typing_extensions-4.16.0-py3-none-any.whl",
@@ -291,10 +220,10 @@
       "additional_pyc_bytes": 379135
     },
     {
-      "wheel": "xgboost_cpu-3.4.1-py3-none-manylinux_2_28_x86_64.whl",
-      "sha256": "1f16331f5c6beb2b40fbd4bf2834333062d93c9eb38b76186a5c206841dc1809",
-      "uncompressed_bytes": 23430116,
-      "additional_pyc_bytes": 1052324
+      "wheel": "vercel_runtime-0.24.1-py3-none-any.whl",
+      "sha256": "74ad58f550e8e4079945b3e278fed62270703befe9b97bf91ab919e3bc22f226",
+      "uncompressed_bytes": 1736609,
+      "additional_pyc_bytes": 2042489
     }
   ]
 }

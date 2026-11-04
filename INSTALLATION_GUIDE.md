@@ -2,10 +2,14 @@
 
 Requirements: Python 3.12, Node 22.12+ or 24, and npm. Allow several GB for the scientific Python dependencies and generated artifacts.
 
-The default backend `pyproject.toml` install is now the API/CPU-inference profile.
+The default backend `pyproject.toml` install is now the web/database/auth profile,
+without NumPy, pandas, SciPy, scikit-learn or any other research library.
 The full snapshot below includes research engines. A full worker can alternatively
 install `pip install -e ".[research]"` from backend. Vercel should use the default
-profile with `uv.lock`, never the full worker snapshot or research extras.
+profile through `scripts/install_vercel_api.py` with frozen `uv.lock`, never the
+full worker snapshot or research extras. Synchronous research can be delegated
+using `RF_RESEARCH_API_ORIGIN`; configure the same database/JWT settings on the
+full service. Missing service/worker execution gives a clear 503 response.
 
 For an existing environment that has `xgboost`, stop its services after research
 jobs finish before changing packages. Use a fresh environment, or uninstall that

@@ -19,7 +19,7 @@ The theme test now verifies persisted settings through the UI instead of reading
 
 - Production frontend build: passed after the fixes.
 - Frontend component tests: **36 passed**.
-- Full backend suite after separating API/worker dependencies: **74 passed, 1 skipped**, with 496 existing scientific-library/deprecation warnings. The skipped check requires live PostgreSQL. This supersedes the earlier entrypoint-only 66-test passing run.
+- Full backend suite after the web-only API boundary: **84 passed, 1 skipped**, with 499 existing scientific-library/deprecation warnings. The skipped check requires live PostgreSQL. This supersedes the earlier 74-test dependency-profile run.
 - Alembic check: no new upgrade operations detected. Dependency check: no broken requirements found.
 - Actual generated PDF was rendered with Poppler and visually inspected.
 - Docker and live PostgreSQL remain unverified here; the browser checks establish the local SQLite workflow, not a hosted deployment.
@@ -40,7 +40,7 @@ locally. A Vercel cloud build, Linux dependency bundle, production database,
 shared storage and external-worker integration have not been verified by this
 entrypoint change. See docs/VERCEL_BACKEND.md before deploying.
 
-## API bundle profile verification
+## Historical CPU/API bundle profile verification (bb0666c; superseded)
 
 - A separately created API-only environment passed **20 tests** covering the
   entrypoint, zero scientific startup imports, authentication, all four detector
@@ -66,3 +66,39 @@ entrypoint change. See docs/VERCEL_BACKEND.md before deploying.
   unverified, as do live PostgreSQL and shared remote artifact integration.
 - Frontend code did not change in this step; the earlier 12 passing browser
   cases were not rerun for this backend-only packaging change.
+
+## Current web-only deployment verification
+
+- Exact Vercel install command tested in fresh isolated Python 3.12 environments:
+  **36 application packages; zero research packages**. The final install uses UV
+  copy mode for OneDrive portability. Its guard printed the web profile and
+  lock hash; UV dependency checks passed in the untouched final environment.
+- Thin API tests: **24 passed, 5 skipped**. The five skips are scientific execution
+  cases intentionally unavailable in this profile, not passing feature claims.
+  The complete research environment executes them: **84 passed, 1 skipped**.
+- Auth, live sessions, 55 API paths, no scientific startup imports, metadata,
+  safe 503 responses, fresh/stale worker checks, secure service configuration,
+  and delegated readiness were tested. Real full-service execution through an
+  HTTPX transport exercised model scores, Parquet data, CSV, artifact hashes,
+  SSE and cross-tenant rejection. This is not live cloud networking.
+- Alembic and full-research dependency checks passed. Scientific deprecation
+  warnings remain; no checks were represented as warning-free.
+- Two Windows-specific follow-up install attempts failed: pruning a test-mutated
+  environment hit a permission error, and a new hardlink-mode install hit
+  OneDrive error 396. The installer now uses copy mode, and a new untouched
+  environment passed. Abandoned test directories remain ignored; no user
+  databases, datasets, models or research environment were deleted.
+- Locked Linux dependency wheels, including published vercel-runtime 0.24.1,
+  total 54,963,412 bytes. Source/configuration plus all-source bytecode brings
+  the component estimate to approximately 79.61 MB. Exact current bytes and
+  wheel hashes are in API_BUNDLE_MEASUREMENT.json. Remaining platform wrapper
+  overhead and the actual Vercel Function are not verified.
+- The supplied backend deployment belongs to an inaccessible Projects scope.
+  Current CLI credentials could not inspect it. Its commit, install command,
+  cache contents and repeated 5,940.71 MB size could not be confirmed. Public
+  Vercel builder source was inspected instead; its normal sync does not select
+  all optional extras. The explicit installer records a build fingerprint and
+  rejects scientific dependencies so future logs can establish the profile.
+- No commit, push or deployment was performed. Live PostgreSQL, cloud service
+  networking, Vercel bundle acceptance and frontend cloud integration remain
+  unverified. Frontend code was unchanged; prior browser results are historical.

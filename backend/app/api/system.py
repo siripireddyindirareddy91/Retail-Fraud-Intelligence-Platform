@@ -36,6 +36,20 @@ def ready(request: Request):
                 worker = db.scalar(select(WorkerHeartbeat.id).where(WorkerHeartbeat.last_seen >= now() - timedelta(seconds=settings.stale_seconds)).limit(1))
             if not worker:
                 return JSONResponse({"status": "not_ready", "reason": "worker_unavailable"}, status_code=503)
+            if settings.research_api_origin:
+                # The research service owns persistent artifacts; do not treat
+                # the web Function's ephemeral filesystem as its storage.
+                if request.headers.get("x-research-delegated"):
+                    return JSONResponse({"status": "not_ready", "reason": "research_service_configuration"}, status_code=503)
+                import httpx
+                try:
+                    with httpx.Client(timeout=5, follow_redirects=False, trust_env=False) as client:
+                        response = client.get(settings.research_api_origin + "/api/v1/health/ready", headers={"X-Research-Delegated": "1"})
+                    if response.status_code != 200 or response.json().get("status") != "ready":
+                        return JSONResponse({"status": "not_ready", "reason": "research_service_unavailable"}, status_code=503)
+                except (httpx.HTTPError, ValueError):
+                    return JSONResponse({"status": "not_ready", "reason": "research_service_unavailable"}, status_code=503)
+                return {"status": "ready", "database": "connected", "schema_revision": revision, "research_service": "ready"}
             try:
                 import tempfile
                 with tempfile.TemporaryFile(dir=settings.artifact_root) as stream:

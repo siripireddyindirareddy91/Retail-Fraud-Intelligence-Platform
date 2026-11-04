@@ -14,17 +14,16 @@ from app.research.data import generate
 from app.research.ml import train
 from app.research.schemas import Generation
 from app.research.storage import records, write_bundle
+from app.services.research_runtime import modules_available
 
 
 def test_api_manifest_and_bundle_configuration_preserve_runtime_modules():
     backend = Path(__file__).resolve().parents[1]
     manifest = tomllib.loads((backend / "pyproject.toml").read_text())
     dependencies = manifest["project"]["dependencies"]
-    assert not any(item.split(">=")[0] in {"sdv", "shap", "torch", "mlflow", "matplotlib", "reportlab", "pyarrow", "xgboost"} for item in dependencies)
-    assert any(item.startswith("xgboost-cpu>=") for item in dependencies)
-    assert any(item.startswith("fastparquet>=") for item in dependencies)
+    assert not any(item.split(">=")[0] in {"numpy", "pandas", "scipy", "scikit-learn", "joblib", "sdv", "shap", "torch", "mlflow", "matplotlib", "reportlab", "pyarrow", "xgboost", "xgboost-cpu", "fastparquet"} for item in dependencies)
     research = manifest["project"]["optional-dependencies"]["research"]
-    assert all(any(item.startswith(name + ">=") for item in research) for name in ("sdv", "torch", "shap", "mlflow", "matplotlib", "reportlab", "pyarrow"))
+    assert all(any(item.startswith(name + ">=") for item in research) for name in ("numpy", "pandas", "scipy", "scikit-learn", "xgboost-cpu", "fastparquet", "sdv", "torch", "shap", "mlflow", "matplotlib", "reportlab", "pyarrow"))
     configuration = json.loads((backend / "vercel.json").read_text())["functions"]["asgi.py"]
     assert configuration["includeFiles"] == "app/**"
     assert "app/" not in configuration["excludeFiles"]
@@ -41,6 +40,7 @@ def test_cold_api_import_loads_no_scientific_libraries(tmp_path):
 
 
 @pytest.mark.parametrize("algorithm", ["logistic_regression", "random_forest", "xgboost", "isolation_forest"])
+@pytest.mark.skipif(not modules_available("numpy", "pandas", "sklearn", "xgboost"), reason="Requires the full research profile; thin API delegation is tested separately")
 def test_all_detector_types_score_through_authenticated_api(algorithm, client, app, headers, account):
     frame = generate(Generation(rows=500, fraud_rate=.2, seed=42))
     bundle, _ = train(frame, algorithm=algorithm)
@@ -64,6 +64,7 @@ def test_all_detector_types_score_through_authenticated_api(algorithm, client, a
     assert client.post("/api/v1/predictions", json={"model_id": model_id, "features": features}).status_code == 401
 
 
+@pytest.mark.skipif(not modules_available("pandas", "fastparquet"), reason="Requires the full research profile")
 def test_api_reading_worker_parquet_preserves_values(tmp_path):
     import importlib.util
     import pandas as pd
@@ -82,8 +83,12 @@ def test_api_reading_worker_parquet_preserves_values(tmp_path):
 def test_queued_research_and_runtime_disclosure(client, headers):
     import importlib.util
     response = client.post("/api/v1/datasets/generate", headers=headers, json={"name": "Worker-bound dataset", "rows": 100, "seed": 42})
-    assert response.status_code == 202
-    assert client.get("/api/v1/jobs/" + response.json()["job_id"], headers=headers).json()["state"] == "queued"
+    if modules_available("sdv", "torch", "pyarrow"):
+        assert response.status_code == 202
+        assert client.get("/api/v1/jobs/" + response.json()["job_id"], headers=headers).json()["state"] == "queued"
+    else:
+        assert response.status_code == 503
+        assert response.json()["error"]["code"] == "research_worker_unavailable"
     capabilities = client.get("/api/v1/capabilities", headers=headers).json()
     assert capabilities["availability_scope"] == "api_process"
     assert capabilities["research_execution"] == "separate_worker"

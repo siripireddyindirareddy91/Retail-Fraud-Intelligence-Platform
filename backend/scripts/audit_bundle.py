@@ -36,11 +36,14 @@ def main():
     if not wheels:
         raise SystemExit("No wheels found; prepare and download the complete API dependency graph first")
     rows, lock = [], []
+    runtime_package = None
     for wheel in wheels:
         total = bytecode = 0
         with zipfile.ZipFile(wheel) as archive:
             metadata = next(name for name in archive.namelist() if name.endswith(".dist-info/METADATA"))
             fields = BytesParser().parsebytes(archive.read(metadata))
+            if fields["Name"].lower().replace("_", "-") == "vercel-runtime":
+                runtime_package = fields["Version"]
             lock.append(f"{fields['Name']}=={fields['Version']}")
             for item in archive.infolist():
                 total += item.file_size
@@ -62,7 +65,7 @@ def main():
     source_pyc = sum(16 + len(marshal.dumps(compile(path.read_bytes(), "/var/task/" + path.relative_to(backend).as_posix(), "exec", dont_inherit=True))) for path in source if path.suffix == ".py")
     dependency_bytes = sum(row["uncompressed_bytes"] for row in rows)
     pyc_bytes = sum(row["additional_pyc_bytes"] for row in rows) + source_pyc
-    report = {"target": "Linux x86_64 CPython 3.12 wheels, downloaded on Windows", "wheel_count": len(rows), "dependency_bytes": dependency_bytes, "application_source_bytes": source_bytes, "additional_pyc_bytes": pyc_bytes, "estimated_component_bytes": dependency_bytes + source_bytes + pyc_bytes, "vercel_runtime_overhead": "not measured", "actual_vercel_bundle_verified": False, "wheels": rows}
+    report = {"target": "Linux x86_64 CPython 3.12 wheels, downloaded on Windows", "wheel_count": len(rows), "dependency_bytes": dependency_bytes, "application_source_bytes": source_bytes, "additional_pyc_bytes": pyc_bytes, "estimated_component_bytes": dependency_bytes + source_bytes + pyc_bytes, "vercel_runtime_package_included": runtime_package, "vercel_runtime_overhead": "published runtime wheel counted when present; remaining platform wrapper overhead not measured", "actual_vercel_bundle_verified": False, "wheels": rows}
     (output / "final-size-report.json").write_text(json.dumps(report, indent=2) + "\n")
     (output / "measured-api-lock.txt").write_text("\n".join(sorted(lock, key=str.lower)) + "\n")
     print(json.dumps({key: value for key, value in report.items() if key != "wheels"}, indent=2))

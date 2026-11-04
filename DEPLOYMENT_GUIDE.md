@@ -6,7 +6,11 @@ the existing factory application without starting the container supervisor or
 worker. Discovery success alone does not provide durable storage or job execution.
 
 For the 5.9 GB Function bundle error, see [docs/VERCEL_BUNDLE_SIZE.md](docs/VERCEL_BUNDLE_SIZE.md).
-Vercel uses the default API dependency profile and `uv.lock`; separate research
+Vercel explicitly runs `scripts/install_vercel_api.py` with frozen `uv.lock` and
+no research packages. `RF_RESEARCH_API_ORIGIN` can delegate scientific HTTP/data
+operations to the full backend, with shared PostgreSQL/JWT configuration and
+artifacts on that service's durable volume. Unavailable execution returns 503.
+Separate research
 workers must install the research extra or the complete worker snapshot. Do not
 install the full worker snapshot in the Vercel API build.
 
@@ -14,7 +18,7 @@ install the full worker snapshot in the Vercel API build.
 
 This hosting profile is prepared in source. It is not a claim that a cloud deployment has passed verification. The frontend stays on Vercel; a single Railway application service runs the API and a separate worker process against PostgreSQL and one shared persistent volume. Keep this service at one replica: Railway volumes are not a shared filesystem across independently deployed services. Do not split API and worker onto unrelated local disks.
 
-1. Connect the Vercel and Railway accounts. Create a Railway project with PostgreSQL and an application service uploaded from the repository root. `railway.json` selects `backend/Dockerfile` and `python -m app.hosted`. The checkout does not currently contain Git metadata; deployment may use a CLI source upload rather than a Git import. Never upload `.env`, `runtime`, `.venv`, datasets, model files or account data.
+1. Connect the Vercel and Railway accounts. Create a Railway project with PostgreSQL and an application service uploaded from the repository root. `railway.json` selects `backend/Dockerfile` and `python -m app.hosted`. The checkout has Git metadata and can use Git integration or a CLI source upload. Never upload `.env`, `runtime`, `.venv`, datasets, model files or account data.
 2. Attach a persistent volume to the application at `/data`. Set `RAILWAY_RUN_UID=0` so the launcher can prepare `/data/retail-fraud`. It immediately switches to the image's unprivileged `researcher` account before migrations and before starting either application process. Keep serverless/sleeping mode disabled for the queue worker.
 3. Configure `RF_DATABASE_URL` using the private PostgreSQL `DATABASE_URL` reference. The hosted launcher converts `postgresql://` to the psycopg SQLAlchemy driver. Generate a fresh production `RF_JWT_SECRET` with at least 32 random bytes; never reuse the local secret. Set `RF_ALLOWED_ORIGINS` to a JSON list of exact HTTPS Vercel frontend origins (no wildcard or trailing slash). The final Vercel project domain can be reserved before its first deployment. `RF_ENVIRONMENT=production` and `RF_COOKIE_SECURE=true` are the hosted defaults and are enforced. Put secrets in provider variables only.
 4. The launcher runs Alembic upgrade before spawning the API and worker. Artifacts and private local MLflow tracking are stored under the mounted volume; MLflow has no public web endpoint in this profile. The readiness endpoint requires the expected schema, a recent worker heartbeat and an actual successful storage write. If either child exits, the supervisor stops its sibling and exits. Container restarts do not resubmit research jobs; stale in-flight jobs become interrupted.
