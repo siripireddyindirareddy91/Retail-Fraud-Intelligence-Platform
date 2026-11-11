@@ -20,7 +20,13 @@ api.interceptors.response.use(response=>response,async error=>{
 });
 export function errorMessage(error:unknown){if(!axios.isAxiosError(error))return 'The request could not be completed.';const failure=error.response?.data?.error;const detail=Array.isArray(failure?.details)?failure.details.slice(0,2).map((item:{location?:string[];message?:string})=>`${item.location?.join('.')}: ${item.message}`).join('; '):'';return `${failure?.message||'Unable to reach the backend. Check the API connection.'}${detail?` ${detail}`:''}`;}
 export async function checkHealth(signal?:AbortSignal) {
-  const response=await api.get('/health/ready',{signal});
+  const response = await api.get('/health/ready', {
+    signal,
+    validateStatus: status => status === 200 || status === 503,
+  });
+  if (response.status === 503 && ['worker_unavailable', 'research_service_unavailable', 'storage_unavailable', 'research_service_configuration'].includes(response.data?.reason)) {
+    return { status: 'research_unavailable' };
+  }
   if(response.data?.status!=='ok' && response.data?.status!=='ready') throw new Error('Backend readiness has not been confirmed.');
   return response.data;
 }

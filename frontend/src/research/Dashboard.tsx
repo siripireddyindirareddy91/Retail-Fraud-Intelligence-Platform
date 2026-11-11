@@ -6,7 +6,30 @@ import { api, errorMessage } from '../services/api';
 import { EmptyState } from '../pages';
 import { RecordsTable, ResultView, type Row } from './Results';
 function ChartCard({title,children}:{title:string;children:React.ReactNode}){return <section className="panel"><div className="panel-heading"><h2>{title}</h2></div><div className="dashboard-chart">{children}</div></section>}
-export function ResearchDashboard(){const [data,setData]=useState<Row|null>(null),[error,setError]=useState('');const refresh=()=>Promise.all([api.get('/dashboard'),api.get('/analytics/overview')]).then(([a,b])=>{setData({...a.data,...b.data});setError('')}).catch(e=>setError(errorMessage(e)));useEffect(()=>{refresh();const timer=setInterval(refresh,5000);return()=>clearInterval(timer)},[]);
+export function ResearchDashboard() {
+  const [data, setData] = useState<Row | null>(null);
+  const [error, setError] = useState('');
+  const refresh = async () => {
+    const [summary, analytics] = await Promise.allSettled([
+      api.get('/dashboard'),
+      api.get('/analytics/overview'),
+    ]);
+    if (summary.status === 'fulfilled' || analytics.status === 'fulfilled') {
+      setData({
+        ...(summary.status === 'fulfilled' ? summary.value.data : {}),
+        ...(analytics.status === 'fulfilled' ? analytics.value.data : {}),
+      });
+    }
+    if (summary.status === 'rejected') setError(errorMessage(summary.reason));
+    else if (analytics.status === 'rejected') setError('Research charts are unavailable. Saved dashboard totals are shown below.');
+    else setError('');
+  };
+  useEffect(() => {
+    void refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
 const activity=data?.activity||[];const count=data?.total_transactions??0;const distribution=[{name:'Legitimate',value:data?.legitimate_transactions||0},{name:'Fraudulent',value:data?.fraudulent_transactions||0}];
 return <><div className="welcome"><div><span className="eyebrow">RESEARCH WORKSPACE</span><h1>Intelligence starts with better data<span className="accent">.</span></h1><p>Actual generated populations, model evaluations and reproducible experiments.</p></div><Link to="/synthetic/generate" className="button primary"><Plus size={16}/>Create dataset</Link></div>{error&&<div role="alert" className="auth-error">{error}<button className="button secondary" onClick={refresh}>Retry</button></div>}<div className="notice"><ShieldCheck size={17}/><span>Fictional transaction research only. Ground truth, predictions and explanation attributions are distinct.</span></div><div className="metrics">{([['Transactions generated',Database,data?.total_transactions],['Fraudulent transactions',ShieldCheck,data?.fraudulent_transactions],['Registered models',Cpu,data?.registered_models],['Completed experiments',Beaker,data?.completed_experiments]] as const).map(([title,Icon,value])=><div className="metric" key={title}><div className="metric-top"><span>{title}</span><span className="metric-icon"><Icon size={18}/></span></div><div className="metric-value">{value==null?'—':Number(value).toLocaleString()}</div><span className="muted text-xs">From your persisted research resources</span></div>)}</div><div className="dashboard-secondary"><span>Legitimate: {data?.legitimate_transactions?.toLocaleString()??'—'}</span><span>Fraud: {data?.fraud_percentage==null?'Undefined':`${data.fraud_percentage.toFixed(2)}%`}</span><span>Active models: {data?.active_models??'—'}</span><span>Latest dataset: {data?.latest_dataset?.name||'None'}</span></div>
 <div className="dashboard-grid"><ChartCard title="Transaction activity over time">{activity.length?<ResponsiveContainer width="100%" height="100%"><LineChart data={activity}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="day" tick={{fontSize:9}}/><YAxis tick={{fontSize:9}}/><Tooltip/><Legend/><Line isAnimationActive={false} dataKey="transactions" stroke="#208563" dot={false}/><Line isAnimationActive={false} dataKey="fraud" stroke="#cc8c46" dot={false}/></LineChart></ResponsiveContainer>:<EmptyState title="No transaction activity yet" description="Generate a dataset to explore its observed timestamps."/>}</ChartCard><ChartCard title="Fraud distribution">{count?<ResponsiveContainer width="100%" height="100%"><PieChart><Pie isAnimationActive={false} data={distribution} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85}>{distribution.map((item,index)=><Cell key={item.name} fill={['#208563','#cc8c46'][index]}/>)}</Pie><Tooltip/><Legend/></PieChart></ResponsiveContainer>:<EmptyState title="No dataset distribution"/>}</ChartCard></div>
